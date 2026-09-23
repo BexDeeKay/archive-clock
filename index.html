@@ -165,6 +165,18 @@
   <div class="result" id="result-b" data-state="empty"></div>
 </div>
 
+<div class="archive" data-archive="c">
+  <div class="top-row">
+    <button class="today-btn" id="today-c" type="button" title="Use today's date">◯</button>
+    <input class="archive-label" id="label-c" value="Archive 3" />
+  </div>
+  <div class="date-line">
+    <span class="label">Archived on:</span>
+    <input class="date-input" id="date-c" inputmode="numeric" autocomplete="off" placeholder="MM/DD/YYYY" maxlength="10" />
+  </div>
+  <div class="result" id="result-c" data-state="empty"></div>
+</div>
+
 <script>
 (function () {
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -288,5 +300,6 @@
 
   createTracker('a', 'Archive 1', 20);
   createTracker('b', 'Archive 2', 60);
+  createTracker('c', 'Archive 3', 90);
 })();
 </script>
