@@ -1,0 +1,303 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Archive Clock</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root {
+    --bg: #f1efe9;
+    --surface: #fffefb;
+    --surface-border: #e2ded3;
+    --ink: #26241f;
+    --muted: #7b7669;
+    --accent: #3c6e59;
+    --accent-soft: #e2ece5;
+    --danger: #b34a30;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181a;
+      --surface: #1e2226;
+      --surface-border: #2c3236;
+      --ink: #ece8df;
+      --muted: #9b968a;
+      --accent: #78b399;
+      --accent-soft: #223129;
+      --danger: #e2896c;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #15181a;
+    --surface: #1e2226;
+    --surface-border: #2c3236;
+    --ink: #ece8df;
+    --muted: #9b968a;
+    --accent: #78b399;
+    --accent-soft: #223129;
+    --danger: #e2896c;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 16px;
+    padding-block: 32px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 18px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  #archive-date {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.9rem, 9vw, 2.6rem);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--surface-border);
+    padding: 4px 2px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  #archive-date::placeholder {
+    color: var(--muted);
+    opacity: 0.55;
+  }
+
+  #archive-date:focus {
+    border-bottom-color: var(--accent);
+  }
+
+  #archive-date[data-invalid="true"] {
+    border-bottom-color: var(--danger);
+  }
+
+  .example-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  #result {
+    font-size: 1.05rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  #result .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-size: 1.15rem;
+  }
+
+  #result[data-state="error"] {
+    color: var(--danger);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  #today-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  #today-btn:hover {
+    filter: brightness(0.97);
+  }
+
+  #today-btn:focus-visible,
+  #archive-date:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="card">
+  <div class="eyebrow">Asset archive tracker</div>
+
+  <div class="field">
+    <label for="archive-date">Archived on</label>
+    <input id="archive-date" inputmode="numeric" autocomplete="off" placeholder="MM/DD/YYYY" maxlength="10" />
+    <div class="example-note" id="example-note" hidden>Example date shown — enter your own above.</div>
+  </div>
+
+  <div class="row">
+    <div id="result" data-state="empty">Enter a date to see how long ago it was archived.</div>
+  </div>
+
+  <div class="row">
+    <button id="today-btn" type="button">Use today's date</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('archive-date');
+  var result = document.getElementById('result');
+  var todayBtn = document.getElementById('today-btn');
+  var exampleNote = document.getElementById('example-note');
+  var STORAGE_KEY = 'archive-clock:last-date';
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function formatMMDDYYYY(y, m, d) {
+    return pad(m) + '/' + pad(d) + '/' + y;
+  }
+
+  function maskInput(raw) {
+    var digits = raw.replace(/\D/g, '').slice(0, 8);
+    if (digits.length > 4) {
+      return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    }
+    if (digits.length > 2) {
+      return digits.slice(0, 2) + '/' + digits.slice(2);
+    }
+    return digits;
+  }
+
+  function parseDate(str) {
+    var m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null;
+    var month = parseInt(m[1], 10), day = parseInt(m[2], 10), year = parseInt(m[3], 10);
+    if (month < 1 || month > 12) return null;
+    var daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) return null;
+    if (year < 1900 || year > 2100) return null;
+    return { year: year, month: month, day: day };
+  }
+
+  function daysBetween(entered) {
+    var now = new Date();
+    var todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    var enteredUTC = Date.UTC(entered.year, entered.month - 1, entered.day);
+    return Math.round((todayUTC - enteredUTC) / 86400000);
+  }
+
+  function render() {
+    var val = input.value.trim();
+    input.setAttribute('data-invalid', 'false');
+
+    if (!val) {
+      result.textContent = 'Enter a date to see how long ago it was archived.';
+      result.setAttribute('data-state', 'empty');
+      return;
+    }
+
+    var parsed = parseDate(val);
+    if (!parsed) {
+      result.textContent = "That date doesn't look right yet — use MM/DD/YYYY.";
+      result.setAttribute('data-state', 'error');
+      input.setAttribute('data-invalid', 'true');
+      return;
+    }
+
+    var diff = daysBetween(parsed);
+    result.setAttribute('data-state', 'ok');
+
+    if (diff === 0) {
+      result.textContent = 'Archived today';
+    } else if (diff === 1) {
+      result.innerHTML = '<span class="num">1</span> day ago';
+    } else if (diff > 1) {
+      result.innerHTML = '<span class="num">' + diff.toLocaleString() + '</span> days ago';
+    } else if (diff === -1) {
+      result.innerHTML = '<span class="num">1</span> day from now';
+    } else {
+      result.innerHTML = '<span class="num">' + Math.abs(diff).toLocaleString() + '</span> days from now';
+    }
+
+    try { localStorage.setItem(STORAGE_KEY, val); } catch (e) {}
+  }
+
+  input.addEventListener('input', function (e) {
+    e.target.value = maskInput(e.target.value);
+    exampleNote.hidden = true;
+    render();
+  });
+
+  todayBtn.addEventListener('click', function () {
+    var now = new Date();
+    input.value = formatMMDDYYYY(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    exampleNote.hidden = true;
+    render();
+    input.focus();
+  });
+
+  var initial = '';
+  try {
+    initial = localStorage.getItem(STORAGE_KEY) || '';
+  } catch (e) {}
+
+  if (!initial) {
+    var now = new Date();
+    var sample = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 45);
+    initial = formatMMDDYYYY(sample.getFullYear(), sample.getMonth() + 1, sample.getDate());
+    exampleNote.hidden = false;
+  } else {
+    exampleNote.hidden = true;
+  }
+
+  input.value = initial;
+  render();
+})();
+</script>
+
+</body></html>
