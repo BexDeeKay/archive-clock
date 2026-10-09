@@ -133,6 +133,40 @@
     color: var(--danger);
   }
 
+  .link-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .link-btn {
+    font-family: inherit;
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: none;
+    border: none;
+    padding: 2px 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--line, currentColor);
+  }
+
+  .link-btn:hover {
+    color: var(--accent);
+  }
+
+  .link-box {
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+  }
+
+  .link-btn:focus-visible,
   .today-btn:focus-visible,
   .date-input:focus-visible,
   .archive-label:focus-visible {
@@ -177,6 +211,11 @@
   <div class="result" id="result-c" data-state="empty"></div>
 </div>
 
+<div class="link-row">
+  <button class="link-btn" id="copy-link-btn" type="button">Copy embed link</button>
+  <input class="link-box" id="link-box" type="text" readonly hidden />
+</div>
+
 <script>
 (function () {
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -218,7 +257,7 @@
     input.size = Math.max(input.value.length, 1);
   }
 
-  function createTracker(id, defaultLabel, sampleOffsetDays) {
+  function createTracker(id, defaultLabel) {
     var input = document.getElementById('date-' + id);
     var label = document.getElementById('label-' + id);
     var result = document.getElementById('result-' + id);
@@ -279,6 +318,7 @@
       try { localStorage.setItem(LABEL_KEY, label.value); } catch (e) {}
     });
 
+    var params = new URLSearchParams(window.location.search);
     var storedDate = '';
     var storedLabel = '';
     try {
@@ -286,20 +326,52 @@
       storedLabel = localStorage.getItem(LABEL_KEY) || '';
     } catch (e) {}
 
-    label.value = storedLabel || defaultLabel;
+    // Dates and names in the page link win over this browser's saved values,
+    // so every PC that opens the same link shows the same thing.
+    var linkDate = params.get(id) || '';
+    var linkLabel = params.get('l' + id) || '';
 
-    if (!storedDate) {
-      var now = new Date();
-      var sample = new Date(now.getFullYear(), now.getMonth(), now.getDate() - sampleOffsetDays);
-      storedDate = formatMMDDYYYY(sample.getFullYear(), sample.getMonth() + 1, sample.getDate());
-    }
-
-    input.value = storedDate;
+    label.value = linkLabel || storedLabel || defaultLabel;
+    input.value = parseDate(linkDate) ? linkDate : storedDate;
     render();
+
+    return { id: id, input: input, label: label };
   }
 
-  createTracker('a', 'Archive 1', 20);
-  createTracker('b', 'Archive 2', 60);
-  createTracker('c', 'Archive 3', 90);
+  var trackers = [
+    createTracker('a', 'Archive 1'),
+    createTracker('b', 'Archive 2'),
+    createTracker('c', 'Archive 3')
+  ];
+
+  var copyBtn = document.getElementById('copy-link-btn');
+  var linkBox = document.getElementById('link-box');
+
+  function buildLink() {
+    var q = new URLSearchParams();
+    trackers.forEach(function (t) {
+      var v = t.input.value.trim();
+      if (parseDate(v)) q.set(t.id, v);
+      var l = t.label.value.trim();
+      if (l) q.set('l' + t.id, l);
+    });
+    return window.location.origin + window.location.pathname + '?' + q.toString();
+  }
+
+  copyBtn.addEventListener('click', function () {
+    var link = buildLink();
+    linkBox.value = link;
+    linkBox.hidden = false;
+    linkBox.focus();
+    linkBox.select();
+    var done = function () { copyBtn.textContent = 'Link copied'; };
+    var fail = function () { copyBtn.textContent = 'Copy the link below'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(done, fail);
+    } else {
+      fail();
+    }
+    setTimeout(function () { copyBtn.textContent = 'Copy embed link'; }, 2500);
+  });
 })();
 </script>
